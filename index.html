@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Life Organizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f4f8;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        h1, h3, h4 {
+            color: #2c3e50;
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            font-weight: 600;
+        }
+        .color-key {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .color-item {
+            margin: 0 10px;
+            display: flex;
+            align-items: center;
+        }
+        .color-box {
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        .input-group {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        .input-group input, .input-group select {
+            padding: 12px;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+        .input-group input[type="text"] {
+            flex-grow: 1;
+        }
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        button:active {
+            transform: scale(0.98);
+        }
+        #itemList, #organizedView, #priorityList {
+            margin-top: 30px;
+        }
+        .item {
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+        .item:hover {
+            transform: translateX(5px);
+        }
+        .item button {
+            width: auto;
+            padding: 5px 10px;
+            background-color: #e74c3c;
+            margin-bottom: 0;
+        }
+        .category-work { background-color: #ffeaa7; }
+        .category-personal { background-color: #81ecec; }
+        .category-health { background-color: #55efc4; }
+        .category-finance { background-color: #74b9ff; }
+        .priority-high { border-left: 5px solid #e74c3c; }
+        .priority-medium { border-left: 5px solid #f39c12; }
+        .priority-low { border-left: 5px solid #2ecc71; }
+        #dailySummary, #aiSuggestions, .focus-area, .notepad {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        #dailySummary p, #aiSuggestions p {
+            margin: 10px 0;
+        }
+        .notepad textarea {
+            width: 100%;
+            min-height: 100px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            font-family: 'Poppins', sans-serif;
+        }
+        #downloadButton {
+            background-color: #27ae60;
+            margin-top: 30px;
+        }
+    </style>
+<script defer data-domain="smartlifeorganizer.tiiny.site" src="https://analytics.tiiny.site/js/plausible.js"></script><script type="text/javascript" src="https://tiiny.host/ad-script.js"></script></head>
+<body>
+    <div class="container">
+        <h1>Smart Life Organizer</h1>
+        <div class="color-key">
+            <div class="color-item"><div class="color-box category-work"></div>Work</div>
+            <div class="color-item"><div class="color-box category-personal"></div>Personal</div>
+            <div class="color-item"><div class="color-box category-health"></div>Health</div>
+            <div class="color-item"><div class="color-box category-finance"></div>Finance</div>
+        </div>
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="Enter item">
+            <select id="category">
+                <option value="work">Work</option>
+                <option value="personal">Personal</option>
+                <option value="health">Health</option>
+                <option value="finance">Finance</option>
+            </select>
+            <select id="priority">
+                <option value="low">Low Priority</option>
+                <option value="medium">Medium Priority</option>
+                <option value="high">High Priority</option>
+            </select>
+        </div>
+        <button id="addItemBtn">Add Item</button>
+        <button id="organizeItemsBtn">Organize & Analyze</button>
+        
+        <div id="itemList"></div>
+        <div id="priorityList"></div>
+        <div id="organizedView"></div>
+        <div id="dailySummary"></div>
+        <div id="aiSuggestions"></div>
+
+        <div class="focus-area">
+            <h3>Focus Area</h3>
+            <div id="whiteNoiseControl">
+                <button id="toggleWhiteNoiseBtn">Play/Pause White Noise</button>
+                <input type="range" id="volumeControl" min="0" max="1" step="0.1" value="0.5">
+            </div>
+
+        <div class="notepad">
+            <h3>What gives me joy at this moment?</h3>
+            <textarea id="joyNotepad"></textarea>
+        </div>
+
+        <div class="notepad">
+            <h3>What am I grateful for today?</h3>
+            <textarea id="gratitudeNotepad"></textarea>
+        </div>
+
+        <div class="notepad">
+            <h3>Today's Diary</h3>
+            <textarea id="diaryNotepad"></textarea>
+        </div>
+
+        <button id="downloadButton">Download Today's Summary (Press at end of day)</button>
+    </div>
+
+    <script>
+        let items = [];
+
+        function addItem() {
+            const itemName = document.getElementById('itemName').value.trim();
+            const category = document.getElementById('category').value;
+            const priority = document.getElementById('priority').value;
+
+            if (itemName) {
+                items.push({ name: itemName, category, priority });
+                updateAll();
+                document.getElementById('itemName').value = '';
+            }
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            updateAll();
+        }
+
+        function updateItemList() {
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '<h3>Your Items:</h3>';
+            items.forEach((item, index) => {
+                itemList.innerHTML += `
+                    <div class="item category-${item.category} priority-${item.priority}">
+                        ${item.name} (${item.category}, ${item.priority} priority)
+                        <button onclick="removeItem(${index})">Remove</button>
+                    </div>
+                `;
+            });
+        }
+
+        function updatePriorityList() {
+            const priorityList = document.getElementById('priorityList');
+            priorityList.innerHTML = '<h3>Ordered from high to low priority</h3>';
+            
+            const sortedItems = [...items].sort((a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                return priorityOrder[b.priority] - priorityOrder[a.priority];
+            });
+            
+            sortedItems.forEach(item => {
+                priorityList.innerHTML += `
+                    <div class="item category-${item.category} priority-${item.priority}">
+                        ${item.name} (${item.category})
+                    </div>
+                `;
+            });
+        }
+
+        function organizeItems() {
+            const organizedView = document.getElementById('organizedView');
+            organizedView.innerHTML = '<h3>Organized View:</h3>';
+
+            const categories = ['work', 'personal', 'health', 'finance'];
+            const priorities = ['high', 'medium', 'low'];
+
+            categories.forEach(category => {
+                organizedView.innerHTML += `<h4>${category.charAt(0).toUpperCase() + category.slice(1)}</h4>`;
+                priorities.forEach(priority => {
+                    const filteredItems = items.filter(item => item.category === category && item.priority === priority);
+                    filteredItems.forEach(item => {
+                        organizedView.innerHTML += `
+                            <div class="item category-${category} priority-${priority}">
+                                ${item.name}
+                            </div>
+                        `;
+                    });
+                });
+            });
+
+            createDailySummary();
+            provideAISuggestions();
+        }
+
+        function createDailySummary() {
+            const dailySummary = document.getElementById('dailySummary');
+            const totalItems = items.length;
+            const highPriorityCount = items.filter(item => item.priority === 'high').length;
+            const categoryCounts = {
+                work: items.filter(item => item.category === 'work').length,
+                personal: items.filter(item => item.category === 'personal').length,
+                health: items.filter(item => item.category === 'health').length,
+                finance: items.filter(item => item.category === 'finance').length
+            };
+
+            let encouragingMessage = "";
+            if (totalItems > 0) {
+                if (highPriorityCount > totalItems * 0.5) {
+                    encouragingMessage = "You've got some challenging tasks ahead, but I believe in you! Remember to take breaks and stay focused.";
+                } else if (categoryCounts.personal === 0 && categoryCounts.health === 0) {
+                    encouragingMessage = "You're working hard! Don't forget to schedule some personal time and self-care activities.";
+                } else {
+                    encouragingMessage = "Great job on organizing your tasks! Your day looks well-balanced. Keep up the good work!";
+                }
+            } else {
+                encouragingMessage = "Ready to start planning your day? You've got this! Remember, every journey begins with a single step.";
+            }
+
+            dailySummary.innerHTML = `
+                <h3>Task Summary</h3>
+                <p>Total tasks: ${totalItems}</p>
+                <p>High priority tasks: ${highPriorityCount}</p>
+                <p>Work tasks: ${categoryCounts.work}</p>
+                <p>Personal tasks: ${categoryCounts.personal}</p>
+                <p>Health tasks: ${categoryCounts.health}</p>
+                <p>Finance tasks: ${categoryCounts.finance}</p>
+                <p><strong>${encouragingMessage}</strong></p>
+            `;
+        }
+
+        function provideAISuggestions() {
+            const aiSuggestions = document.getElementById('aiSuggestions');
+            aiSuggestions.innerHTML = '<h3>Potential Suggestions</h3>';
+
+            const workItems = items.filter(item => item.category === 'work').length;
+            const personalItems = items.filter(item => item.category === 'personal').length;
+            const healthItems = items.filter(item => item.category === 'health').length;
+            const financeItems = items.filter(item => item.category === 'finance').length;
+            const highPriorityItems = items.filter(item => item.priority === 'high').length;
+
+            let suggestions = [];
+
+            if (workItems > (personalItems + healthItems)) {
+                suggestions.push("Your schedule is heavily work-focused. Consider adding more personal and health activities for better work-life balance.");
+            }
+
+            if (healthItems === 0) {
+                suggestions.push("I noticed you don't have any health-related tasks. How about potentially adding a quick workout or meditation session to boost your energy?");
+            }
+
+            if (highPriorityItems > items.length * 0.4) {
+                suggestions.push("You have many high-priority items. Perhaps try the 'Eisenhower Matrix' to further prioritize: urgent and important tasks first, then important but not urgent, etc.");
+            }
+
+            if (financeItems === 0) {
+                suggestions.push("Financial health is important too. Consider adding a quick budget review or savings check to your tasks.");
+            }
+
+            if (items.length > 10) {
+                suggestions.push("Remember to break larger tasks into smaller, manageable steps to avoid feeling overwhelmed.");
+            }
+
+            if (suggestions.length === 0) {
+                suggestions.push("Your task list looks well-balanced! Keep up this great approach to managing your responsibilities.");
+            }
+
+            suggestions.forEach(suggestion => {
+                aiSuggestions.innerHTML += `<p>• ${suggestion}</p>`;
+            });
+        }
+
+        let whiteNoiseAudio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-light-rain-loop-2393.mp3');
+        whiteNoiseAudio.loop = true;
+
+        function toggleWhiteNoise() {
+            if (whiteNoiseAudio.paused) {
+                whiteNoiseAudio.play();
+            } else {
+                whiteNoiseAudio.pause();
+            }
+        }
+
+        document.getElementById('volumeControl').addEventListener('input', function(e) {
+            whiteNoiseAudio.volume = e.target.value;
+        });
+
+        function updateAll() {
+            updateItemList();
+            updatePriorityList();
+        }
+
+        function downloadSummary() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(18);
+            doc.text('Daily Summary', 105, 15, null, null, 'center');
+            
+            doc.setFontSize(12);
+            let yPos = 30;
+
+            // Task Summary
+            doc.text('Task Summary:', 20, yPos);
+            yPos += 10;
+            items.forEach(item => {
+                doc.text(`• ${item.name} (${item.category}, ${item.priority} priority)`, 30, yPos);
+                yPos += 7;
+            });
+
+            // Joy Notes
+            yPos += 10;
+            doc.text('What gives me joy:', 20, yPos);
+            yPos += 7;
+            const joyNotes = document.getElementById('joyNotepad').value;
+            const joyLines = doc.splitTextToSize(joyNotes, 170);
+            joyLines.forEach(line => {
+                doc.text(line, 30, yPos);
+                yPos += 7;
+            });
+
+            // Gratitude Notes
+            yPos += 10;
+            doc.text('What I\'m grateful for:', 20, yPos);
+            yPos += 7;
+            const gratitudeNotes = document.getElementById('gratitudeNotepad').value;
+            const gratitudeLines = doc.splitTextToSize(gratitudeNotes, 170);
+            gratitudeLines.forEach(line => {
+                doc.text(line, 30, yPos);
+                yPos += 7;
+            });
+
+            // Diary Entry
+            yPos += 10;
+            doc.text('Today\'s Diary:', 20, yPos);
+            yPos += 7;
+            const diaryNotes = document.getElementById('diaryNotepad').value;
+            const diaryLines = doc.splitTextToSize(diaryNotes, 170);
+            diaryLines.forEach(line => {
+                doc.text(line, 30, yPos);
+                yPos += 7;
+            });
+
+            doc.save('daily_summary.pdf');
+        }
+
+        document.getElementById('addItemBtn').addEventListener('click', addItem);
+        document.getElementById('organizeItemsBtn').addEventListener('click', organizeItems);
+        document.getElementById('toggleWhiteNoiseBtn').addEventListener('click', toggleWhiteNoise);
+        document.getElementById('downloadButton').addEventListener('click', downloadSummary);
+
+        updateAll();
+    </script>
+    
+</body>
+</html>
